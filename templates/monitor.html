@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MNIST CNN Training Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>MNIST CNN Training Monitor</h1>
+        
+        <div class="charts">
+            <div id="lossChart"></div>
+            <div id="accuracyChart"></div>
+        </div>
+        
+        <div id="results" style="display: none;">
+            <h2>Training Complete!</h2>
+            <h3>Results on Random Test Images:</h3>
+            <img id="resultsImage" src="" alt="Test Results">
+        </div>
+    </div>
+
+    <script>
+        function updateCharts() {
+            fetch('/get_training_data')
+                .then(response => response.json())
+                .then(data => {
+                    const lossTrace = {
+                        y: data.loss,
+                        type: 'scatter',
+                        name: 'Loss'
+                    };
+                    
+                    const accuracyTrace = {
+                        y: data.accuracy,
+                        type: 'scatter',
+                        name: 'Accuracy'
+                    };
+                    
+                    Plotly.newPlot('lossChart', [lossTrace], {
+                        title: 'Training Loss',
+                        xaxis: { title: 'Iterations' },
+                        yaxis: { title: 'Loss' }
+                    });
+                    
+                    Plotly.newPlot('accuracyChart', [accuracyTrace], {
+                        title: 'Training Accuracy',
+                        xaxis: { title: 'Iterations' },
+                        yaxis: { title: 'Accuracy (%)' }
+                    });
+                });
+        }
+
+        function checkTrainingStatus() {
+            fetch('/training_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.complete) {
+                        document.getElementById('results').style.display = 'block';
+                        fetch('/results')
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.image) {
+                                    document.getElementById('resultsImage').src = 'data:image/png;base64,' + data.image;
+                                }
+                            });
+                        clearInterval(statusInterval);
+                    }
+                });
+        }
+
+        // Update charts every 5 seconds
+        setInterval(updateCharts, 5000);
+        
+        // Check training status every 5 seconds
+        const statusInterval = setInterval(checkTrainingStatus, 5000);
+    </script>
+</body>
+</html> 
