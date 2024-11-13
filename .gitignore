@@ -1,4 +1,5 @@
 .DS_Store
 /session*
 /__pycache__
-*.pyc   
+*.pyc
+/data/*
