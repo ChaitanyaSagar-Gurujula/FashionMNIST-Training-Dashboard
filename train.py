@@ -39,7 +39,7 @@ def train_model():
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # Training loop
-    num_epochs = 10
+    num_epochs = 1
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
@@ -88,8 +88,10 @@ def evaluate_random_samples(model, n_samples=10):
     model.eval()
     results = []
     
-    fig, axes = plt.subplots(2, 5, figsize=(15, 6))
-    axes = axes.ravel()
+    # Create a list to store images and predictions
+    images = []
+    predictions = []
+    labels = []
     
     for idx, sample_idx in enumerate(indices):
         image, label = test_dataset[sample_idx]
@@ -99,16 +101,29 @@ def evaluate_random_samples(model, n_samples=10):
             output = model(image)
             pred = output.argmax(dim=1).item()
         
-        # Plot image
-        axes[idx].imshow(image.cpu().squeeze(), cmap='gray')
+        # Store the results
+        images.append(image.cpu().squeeze().numpy())
+        predictions.append(pred)
+        labels.append(label)
+    
+    return images, predictions, labels
+
+def create_results_plot(images, predictions, labels):
+    """Create the plot in the main thread"""
+    fig, axes = plt.subplots(2, 5, figsize=(15, 6))
+    axes = axes.ravel()
+    
+    for idx in range(len(images)):
+        axes[idx].imshow(images[idx], cmap='gray')
         axes[idx].axis('off')
-        axes[idx].set_title(f'True: {label}\nPred: {pred}')
+        axes[idx].set_title(f'True: {labels[idx]}\nPred: {predictions[idx]}')
     
     plt.tight_layout()
     
     # Convert plot to base64 string
     buffer = BytesIO()
     plt.savefig(buffer, format='png')
+    plt.close()  # Close the figure to free memory
     buffer.seek(0)
     image_png = buffer.getvalue()
     buffer.close()

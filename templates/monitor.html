@@ -9,9 +9,19 @@
     <div class="container">
         <h1>MNIST CNN Training Monitor</h1>
         
+        <div class="metrics-container">
+            <div class="metric-box">
+                <h3>Current Loss</h3>
+                <p id="currentLoss">-</p>
+            </div>
+            <div class="metric-box">
+                <h3>Current Accuracy</h3>
+                <p id="currentAccuracy">-</p>
+            </div>
+        </div>
+        
         <div class="charts">
-            <div id="lossChart"></div>
-            <div id="accuracyChart"></div>
+            <div id="combinedChart"></div>
         </div>
         
         <div id="results" style="display: none;">
@@ -26,29 +36,42 @@
             fetch('/get_training_data')
                 .then(response => response.json())
                 .then(data => {
+                    // Update current metrics
+                    if (data.loss.length > 0) {
+                        const lastLoss = data.loss[data.loss.length - 1];
+                        const lastAccuracy = data.accuracy[data.accuracy.length - 1];
+                        document.getElementById('currentLoss').textContent = lastLoss.toFixed(4);
+                        document.getElementById('currentAccuracy').textContent = lastAccuracy.toFixed(2) + '%';
+                    }
+
                     const lossTrace = {
+                        x: Array.from({length: data.loss.length}, (_, i) => i + 1),
                         y: data.loss,
                         type: 'scatter',
-                        name: 'Loss'
+                        name: 'Loss',
+                        yaxis: 'y1'
                     };
                     
                     const accuracyTrace = {
+                        x: Array.from({length: data.accuracy.length}, (_, i) => i + 1),
                         y: data.accuracy,
                         type: 'scatter',
-                        name: 'Accuracy'
+                        name: 'Accuracy',
+                        yaxis: 'y2'
                     };
                     
-                    Plotly.newPlot('lossChart', [lossTrace], {
-                        title: 'Training Loss',
+                    const layout = {
+                        title: 'Training Loss and Accuracy',
                         xaxis: { title: 'Iterations' },
-                        yaxis: { title: 'Loss' }
-                    });
+                        yaxis: { title: 'Loss', side: 'left' },
+                        yaxis2: {
+                            title: 'Accuracy (%)',
+                            overlaying: 'y',
+                            side: 'right'
+                        }
+                    };
                     
-                    Plotly.newPlot('accuracyChart', [accuracyTrace], {
-                        title: 'Training Accuracy',
-                        xaxis: { title: 'Iterations' },
-                        yaxis: { title: 'Accuracy (%)' }
-                    });
+                    Plotly.newPlot('combinedChart', [lossTrace, accuracyTrace], layout);
                 });
         }
 
