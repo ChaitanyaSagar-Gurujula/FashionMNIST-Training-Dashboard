@@ -16,27 +16,31 @@ This project implements a real-time training visualization system for comparing 
 
 1. Create a virtual environment (optional but recommended): 
 
-bash
+```bash
 python -m venv venv
 source venv/bin/activate # On Windows: venv\Scripts\activate
-
+```
 
 2. Install required packages:
 
-bash
+```bash
 pip install torch torchvision flask matplotlib tqdm
+```
 
 
 ## Running the Application
 
 1. Start the Flask server:
 
-bash
+```bash
 python server.py
+```
 
 2. Open your web browser and navigate to:
 
+```
 http://localhost:8080
+```
 
 3. Configure both models using the web interface:
    - Set kernel sizes for each convolutional layer
@@ -66,6 +70,7 @@ http://localhost:8080
 
 ## Project Structure
 
+```
 fashion_mnist_monitor/
 ├── HowTo.md
 ├── train.py        # Training logic and ModelTrainer class
@@ -75,6 +80,7 @@ fashion_mnist_monitor/
 │   └── monitor.html
 └── static/         # Static files
     └── style.css
+```
 
 
 ## Notes
