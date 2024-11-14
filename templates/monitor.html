@@ -1,101 +1,312 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MNIST CNN Training Monitor</title>
+    <title>FashionMNIST CNN Training Monitor</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>MNIST CNN Training Monitor</h1>
-        
+        <h1>FashionMNIST CNN Training Monitor</h1>
+
+        <!-- Model Configurations -->
+        <div class="model-configs">
+            <!-- Model 1 Configuration -->
+            <div class="model-config">
+                <h2>Model 1 Configuration</h2>
+                <form id="model1Form">
+                    <div class="form-group">
+                        <label>Number of kernels in each layer:</label>
+                        <input type="number" name="kernels1" value="32" min="16" max="128" step="16">
+                        <input type="number" name="kernels2" value="64" min="16" max="128" step="16">
+                        <input type="number" name="kernels3" value="128" min="16" max="256" step="16">
+                        <input type="number" name="kernels4" value="256" min="16" max="256" step="16">
+                    </div>
+                    <div class="form-group">
+                        <label>Optimizer:</label>
+                        <select name="optimizer">
+                            <option value="adam">Adam</option>
+                            <option value="sgd">SGD</option>
+                            <option value="rmsprop">RMSprop</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Learning Rate:</label>
+                        <input type="number" name="learning_rate" value="0.001" min="0.0001" max="0.1" step="0.0001">
+                    </div>
+                    <div class="form-group">
+                        <label>Dropout Rate:</label>
+                        <input type="number" name="dropout" value="0.5" min="0.1" max="0.9" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Batch Size:</label>
+                        <select name="batch_size">
+                            <option value="32">32</option>
+                            <option value="64" selected>64</option>
+                            <option value="128">128</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Model 2 Configuration -->
+            <div class="model-config">
+                <h2>Model 2 Configuration</h2>
+                <form id="model2Form">
+                    <div class="form-group">
+                        <label>Number of kernels in each layer:</label>
+                        <input type="number" name="kernels1" value="16" min="16" max="128" step="16">
+                        <input type="number" name="kernels2" value="32" min="16" max="128" step="16">
+                        <input type="number" name="kernels3" value="64" min="16" max="256" step="16">
+                        <input type="number" name="kernels4" value="128" min="16" max="256" step="16">
+                    </div>
+                    <div class="form-group">
+                        <label>Optimizer:</label>
+                        <select name="optimizer">
+                            <option value="adam">Adam</option>
+                            <option value="sgd" selected>SGD</option>
+                            <option value="rmsprop">RMSprop</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Learning Rate:</label>
+                        <input type="number" name="learning_rate" value="0.01" min="0.0001" max="0.1" step="0.0001">
+                    </div>
+                    <div class="form-group">
+                        <label>Dropout Rate:</label>
+                        <input type="number" name="dropout" value="0.3" min="0.1" max="0.9" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Batch Size:</label>
+                        <select name="batch_size">
+                            <option value="32" selected>32</option>
+                            <option value="64">64</option>
+                            <option value="128">128</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Start Training Button -->
+        <div class="button-container">
+            <button id="startTraining">Start Training</button>
+        </div>
+
+        <!-- Current Metrics Display -->
         <div class="metrics-container">
-            <div class="metric-box">
-                <h3>Current Loss</h3>
-                <p id="currentLoss">-</p>
+            <div class="model-metrics">
+                <h3>Model 1 Metrics</h3>
+                <div class="metric-box">
+                    <h4>Current Loss</h4>
+                    <p id="currentLoss1">-</p>
+                </div>
+                <div class="metric-box">
+                    <h4>Current Accuracy</h4>
+                    <p id="currentAccuracy1">-</p>
+                </div>
             </div>
-            <div class="metric-box">
-                <h3>Current Accuracy</h3>
-                <p id="currentAccuracy">-</p>
+            <div class="model-metrics">
+                <h3>Model 2 Metrics</h3>
+                <div class="metric-box">
+                    <h4>Current Loss</h4>
+                    <p id="currentLoss2">-</p>
+                </div>
+                <div class="metric-box">
+                    <h4>Current Accuracy</h4>
+                    <p id="currentAccuracy2">-</p>
+                </div>
             </div>
         </div>
-        
-        <div class="charts">
+
+        <!-- Single Combined Chart -->
+        <div class="chart-container">
             <div id="combinedChart"></div>
-        </div>
-        
-        <div id="results" style="display: none;">
-            <h2>Training Complete!</h2>
         </div>
     </div>
 
     <script>
+        // Global variables
+        let total_batches = 0;  // Will be set when training starts
+
+        // Start training function
+        document.getElementById('startTraining').addEventListener('click', function() {
+            const model1Config = Object.fromEntries(new FormData(document.getElementById('model1Form')));
+            const model2Config = Object.fromEntries(new FormData(document.getElementById('model2Form')));
+
+            fetch('/start_training', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model1: model1Config,
+                    model2: model2Config
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Training started:', data);
+                // Start updating the chart
+                setInterval(updateCharts, 2000);
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
         function updateCharts() {
             fetch('/get_training_data')
                 .then(response => response.json())
                 .then(data => {
+                    console.log("Received data:", data);
+
                     // Update current metrics
-                    if (data.loss.length > 0) {
-                        const lastLoss = data.loss[data.loss.length - 1];
-                        const lastAccuracy = data.accuracy[data.accuracy.length - 1];
-                        document.getElementById('currentLoss').textContent = lastLoss.toFixed(4);
-                        document.getElementById('currentAccuracy').textContent = lastAccuracy.toFixed(2) + '%';
+                    if (data.model1 && data.model1.loss.length > 0) {
+                        document.getElementById('currentLoss1').textContent = 
+                            data.model1.loss[data.model1.loss.length - 1].toFixed(4);
+                        document.getElementById('currentAccuracy1').textContent = 
+                            data.model1.accuracy[data.model1.accuracy.length - 1].toFixed(2) + '%';
+                    }
+                    if (data.model2 && data.model2.loss.length > 0) {
+                        document.getElementById('currentLoss2').textContent = 
+                            data.model2.loss[data.model2.loss.length - 1].toFixed(4);
+                        document.getElementById('currentAccuracy2').textContent = 
+                            data.model2.accuracy[data.model2.accuracy.length - 1].toFixed(2) + '%';
                     }
 
-                    const lossTrace = {
-                        x: Array.from({length: data.loss.length}, (_, i) => i + 1),
-                        y: data.loss,
-                        type: 'scatter',
-                        name: 'Loss',
-                        yaxis: 'y1'
-                    };
+                    const traces = [];
                     
-                    const accuracyTrace = {
-                        x: Array.from({length: data.accuracy.length}, (_, i) => i + 1),
-                        y: data.accuracy,
-                        type: 'scatter',
-                        name: 'Accuracy',
-                        yaxis: 'y2'
-                    };
+                    if (data.model1 && data.model1.loss.length > 0) {
+                        // Calculate fractional epochs for Model 1
+                        const x_values1 = data.model1.epoch.map((e, i) => {
+                            return e - 1 + (data.model1.batch[i] / Math.max(...data.model1.batch));
+                        });
+
+                        // Model 1 Loss
+                        traces.push({
+                            x: x_values1,
+                            y: data.model1.loss,
+                            type: 'scatter',
+                            name: 'Model 1 Loss',
+                            line: {color: '#1f77b4'},
+                            hovertemplate: 
+                                'Epoch: %{x:.2f}<br>' +
+                                'Batch: %{text}<br>' +
+                                'Loss: %{y:.4f}<extra></extra>',
+                            text: data.model1.batch
+                        });
+                        
+                        // Model 1 Accuracy
+                        traces.push({
+                            x: x_values1,
+                            y: data.model1.accuracy,
+                            type: 'scatter',
+                            name: 'Model 1 Accuracy',
+                            yaxis: 'y2',
+                            line: {color: '#2ca02c'},
+                            hovertemplate: 
+                                'Epoch: %{x:.2f}<br>' +
+                                'Batch: %{text}<br>' +
+                                'Accuracy: %{y:.2f}%<extra></extra>',
+                            text: data.model1.batch
+                        });
+                    }
                     
+                    if (data.model2 && data.model2.loss.length > 0) {
+                        // Calculate fractional epochs for Model 2
+                        const x_values2 = data.model2.epoch.map((e, i) => {
+                            return e - 1 + (data.model2.batch[i] / Math.max(...data.model2.batch));
+                        });
+
+                        // Model 2 Loss
+                        traces.push({
+                            x: x_values2,
+                            y: data.model2.loss,
+                            type: 'scatter',
+                            name: 'Model 2 Loss',
+                            line: {color: '#ff7f0e'},
+                            hovertemplate: 
+                                'Epoch: %{x:.2f}<br>' +
+                                'Batch: %{text}<br>' +
+                                'Loss: %{y:.4f}<extra></extra>',
+                            text: data.model2.batch
+                        });
+                        
+                        // Model 2 Accuracy
+                        traces.push({
+                            x: x_values2,
+                            y: data.model2.accuracy,
+                            type: 'scatter',
+                            name: 'Model 2 Accuracy',
+                            yaxis: 'y2',
+                            line: {color: '#d62728'},
+                            hovertemplate: 
+                                'Epoch: %{x:.2f}<br>' +
+                                'Batch: %{text}<br>' +
+                                'Accuracy: %{y:.2f}%<extra></extra>',
+                            text: data.model2.batch
+                        });
+                    }
+
                     const layout = {
-                        title: 'Training Loss and Accuracy',
-                        xaxis: { title: 'Iterations' },
-                        yaxis: { title: 'Loss', side: 'left' },
+                        title: 'Training Progress Comparison',
+                        xaxis: { 
+                            title: 'Epochs',
+                            showgrid: true,
+                            tickmode: 'linear',
+                            dtick: 0.2  // Show ticks every 0.2 epochs
+                        },
+                        yaxis: { 
+                            title: 'Loss',
+                            side: 'left',
+                            showgrid: true
+                        },
                         yaxis2: {
                             title: 'Accuracy (%)',
                             overlaying: 'y',
-                            side: 'right'
+                            side: 'right',
+                            showgrid: false,
+                            range: [0, 100]
+                        },
+                        legend: { 
+                            orientation: 'h',
+                            y: -0.2
+                        },
+                        hovermode: 'closest',
+                        showlegend: true,
+                        height: 600,
+                        margin: {
+                            l: 60,
+                            r: 60,
+                            t: 40,
+                            b: 60
                         }
                     };
-                    
-                    Plotly.newPlot('combinedChart', [lossTrace, accuracyTrace], layout);
+
+                    console.log("Plotting with traces:", traces);
+                    Plotly.react('combinedChart', traces, layout);
+                })
+                .catch(error => {
+                    console.error("Error updating charts:", error);
                 });
         }
 
-        function checkTrainingStatus() {
-            fetch('/training_status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.complete) {
-                        document.getElementById('results').style.display = 'block';
-                        fetch('/results')
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.image) {
-                                    document.getElementById('resultsImage').src = 'data:image/png;base64,' + data.image;
-                                }
-                            });
-                        clearInterval(statusInterval);
-                    }
-                });
-        }
-
-        // Update charts every 5 seconds
-        setInterval(updateCharts, 5000);
-        
-        // Check training status every 5 seconds
-        const statusInterval = setInterval(checkTrainingStatus, 5000);
+        // Initial plot setup
+        document.addEventListener('DOMContentLoaded', function() {
+            const layout = {
+                title: 'Training Progress Comparison',
+                xaxis: { title: 'Epochs' },
+                yaxis: { title: 'Loss' },
+                yaxis2: {
+                    title: 'Accuracy (%)',
+                    overlaying: 'y',
+                    side: 'right',
+                    range: [0, 100]
+                },
+                showlegend: true,
+                height: 600
+            };
+            Plotly.newPlot('combinedChart', [], layout);
+        });
     </script>
 </body>
 </html> 
