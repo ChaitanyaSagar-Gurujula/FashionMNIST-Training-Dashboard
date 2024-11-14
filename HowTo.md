@@ -1,14 +1,16 @@
-# MNIST CNN Training Monitor
+# FashionMNIST CNN Training Monitor
 
-This project implements a 4-layer CNN for MNIST digit classification with real-time training visualization.
+This project implements a real-time training visualization system for comparing two CNN models on the FashionMNIST dataset. It features an interactive web interface for configuring and monitoring the training progress of both models simultaneously.
 
 ## Requirements
 
 - Python 3.7+
 - PyTorch
 - Flask
-- Matplotlib
+- Plotly.js
 - torchvision
+- tqdm
+- matplotlib
 
 ## Installation
 
@@ -22,68 +24,162 @@ source venv/bin/activate # On Windows: venv\Scripts\activate
 2. Install required packages:
 
 bash
-pip install -r requirements.txt
+pip install torch torchvision flask matplotlib tqdm
 
 
 ## Running the Application
 
-1. Make sure all files are in their correct directories as shown in the project structure.
-
-2. Start the application:
+1. Start the Flask server:
 
 bash
 python server.py
 
-3. Open your web browser and navigate to:
+2. Open your web browser and navigate to:
 
-http://localhost:5000
+http://localhost:8080
+
+3. Configure both models using the web interface:
+   - Set kernel sizes for each convolutional layer
+   - Choose optimizer and learning rate
+   - Set dropout rate and batch size
+   - Click "Start Training" to begin
 
 
 ## Features
 
-- Real-time training loss and accuracy visualization
-- Automatic GPU/CPU detection and utilization
-- Results visualization on 10 random test images after training
-- Interactive web interface
+- Real-time training visualization using Plotly.js
+- Simultaneous training of two models with different configurations
+- Interactive configuration of model parameters:
+  - Number of kernels in each layer
+  - Choice of optimizer (Adam, SGD, RMSprop)
+  - Learning rate
+  - Dropout rate
+  - Batch size
+- Live metrics display:
+  - Training loss
+  - Training accuracy
+- Combined plot showing:
+  - Loss curves for both models
+  - Accuracy curves for both models
+  - Fractional epoch progress
+  - Detailed hover information
 
 ## Project Structure
 
-mnist_cnn/
+fashion_mnist_monitor/
 ├── HowTo.md
-├── train.py # Training logic and evaluation
-├── model.py # CNN model definition
-├── server.py # Flask server
-├── templates/ # HTML templates
-│ └── monitor.html
-└── static/ # Static files
-└── style.css
+├── train.py        # Training logic and ModelTrainer class
+├── model.py        # CNN architecture definition
+├── server.py       # Flask server and API endpoints
+├── templates/      # HTML templates
+│   └── monitor.html
+└── static/         # Static files
+    └── style.css
 
 
 ## Notes
 
-- Training progress is automatically visualized in real-time
-- The model will use CUDA if available, otherwise CPU
-- Training takes approximately 10-15 minutes depending on your hardware
-- Results will be displayed automatically once training is complete
+- Training progress is saved in real-time
+- The interface updates every 2 seconds
+- Both models train simultaneously in separate threads
+- The plot shows fractional epochs for precise progress tracking
 
 ## Troubleshooting
 
-If you encounter any issues:
+1. Port Issues:
+   - If port 8080 is in use, modify the port number in `server.py`
+   - Default port can be changed in the last line of `server.py`
 
-1. Make sure all dependencies are correctly installed
-2. Check if CUDA is properly set up if using GPU
-3. Ensure all files are in the correct directory structure
-4. Check the console for any error messages
+2. CUDA/GPU Issues:
+   - The code automatically detects and uses GPU if available
+   - Falls back to CPU if CUDA is not available
 
-## Additional Information
+3. Memory Issues:
+   - Reduce batch size if encountering memory problems
+   - Adjust kernel sizes in the model configuration
 
-- The CNN architecture consists of 4 convolutional layers followed by fully connected layers
-- Each convolutional layer is followed by ReLU activation and max pooling
-- The model uses dropout for regularization
-- Training parameters:
-  - Batch size: 64
-  - Learning rate: 0.001
-  - Optimizer: Adam
-  - Number of epochs: 10
+
+## Model Comparison
+
+The application is designed to compare two CNN models with different architectures and hyperparameters in real-time:
+
+### Comparison Features
+- Side-by-side training visualization
+- Combined plot showing both models' performance
+- Different metrics for comparison:
+  - Training Loss
+  - Training Accuracy
+  - Training Speed (batches/second)
+
+### What to Compare
+1. Architecture Differences:
+   - Effect of different kernel sizes
+   - Impact of layer configurations
+   - Influence of dropout rates
+
+2. Optimization Strategies:
+   - Optimizer performance (Adam vs SGD vs RMSprop)
+   - Learning rate effects
+   - Batch size impact
+
+3. Performance Metrics:
+   - Convergence speed
+   - Final accuracy
+   - Loss reduction rate
+   - Training stability
+
+### Example Comparisons
+
+1. Deep vs Shallow:
+   ```
+   Model 1: [32, 64, 128, 256] kernels
+   Model 2: [16, 32, 64, 128] kernels
+   ```
+
+2. Optimizer Impact:
+   ```
+   Model 1: Adam (lr=0.001)
+   Model 2: SGD (lr=0.01)
+   ```
+
+3. Regularization Effect:
+   ```
+   Model 1: Dropout=0.5
+   Model 2: Dropout=0.3
+   ```
+
+### Interpreting Results
+
+1. Loss Curves:
+   - Lower curves indicate better model fit
+   - Smoother curves suggest stable training
+   - Sharp drops may indicate learning rate issues
+
+2. Accuracy Curves:
+   - Higher curves show better performance
+   - Plateaus suggest learning saturation
+   - Large fluctuations might indicate instability
+
+3. Training Speed:
+   - Larger models typically train slower
+   - Batch size affects memory usage and speed
+   - GPU utilization varies with model size
+
+### Best Practices for Comparison
+
+1. Controlled Variables:
+   - Change only one parameter at a time
+   - Keep dataset and preprocessing consistent
+   - Use same number of epochs
+
+2. Fair Evaluation:
+   - Consider both final performance and training time
+   - Look for stability in training
+   - Compare resource usage (memory, GPU)
+
+3. Common Patterns:
+   - Larger models may overfit on simple tasks
+   - Higher learning rates need more stability
+   - Dropout affects training speed
 
 For any additional questions or issues, please refer to the source code comments or create an issue in the project repository.
